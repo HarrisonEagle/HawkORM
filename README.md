@@ -23,4 +23,5 @@ go get github.com/HarrisonKawagoe3960X/GABAHTMLParser
   - 🔄Comming soon...
 - **Delete**
   - ✅delete by conditions
-  - 🔄delete by object
+  - ✅delete an object
+  - ✅delete with multiple objects
