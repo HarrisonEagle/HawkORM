@@ -14,9 +14,9 @@ func(db *DB) Insert(model interface{}) error{
 		if reflect.ValueOf(model).Len()== 0{
 			return nil
 		}
-		bulkInsertQuery(model,false,&queries,currenttime)
+		bulkModifyQuery(model,false,&queries,currenttime)
 	}else if reflect.TypeOf(model).Kind() == reflect.Struct{
-		insertQuery(model,false,&queries,currenttime)
+		modifyQuery(model,false,&queries,currenttime)
 	}
 	tx, _ := db.dbpool.Begin()
 	for i := len(queries) - 1;i >=0;i--{

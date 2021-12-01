@@ -22,7 +22,7 @@ func getExistingQuery(tableName string,queries *[]QueryInf) *QueryInf{
 	return nil
 }
 
-func AssignFromArgs(model interface{},columns *[]interface{},index int,length int)  {
+func AssignFromArgs(model interface{},columns *[]interface{})  {
 	valueinf := reflect.ValueOf(model).Elem()
 	typeinf := valueinf.Type()
 	for i := 0; i < valueinf.NumField(); i++ {
@@ -33,14 +33,14 @@ func AssignFromArgs(model interface{},columns *[]interface{},index int,length in
 		if typeinf.Field(i).Type.String() == "time.Time" {
 			*columns = append(*columns,valueinf.Field(i).Addr().Interface())
 		}else if fieldkind==reflect.Struct && typeinf.Field(i).Tag.Get("ForeignKey") == "" {
-			AssignFromArgs(valueinf.FieldByName(typeinf.Field(i).Name).Addr().Interface(),columns,index,length)
+			AssignFromArgs(valueinf.FieldByName(typeinf.Field(i).Name).Addr().Interface(),columns)
 		} else {
 			*columns = append(*columns,valueinf.Field(i).Addr().Interface())
 		}
 	}
 }
 
-func extractColumnsFromStructWithCount(model interface{},column *string,count *int) {
+func extractColumnsFromStructWithCount(model interface{},column *string) {
 	typeinf := reflect.TypeOf(model)
 	valueinf := reflect.ValueOf(model)
 	for i := 0; i < typeinf.NumField(); i++ {
@@ -52,22 +52,20 @@ func extractColumnsFromStructWithCount(model interface{},column *string,count *i
 			if *column != "" {
 				*column += ","
 			}
-			*count++
 			*column += getColumnName(typeinf.Field(i).Name)
 		} else if fieldkind == reflect.Struct && typeinf.Field(i).Tag.Get("ForeignKey") == "" {
-			extractColumnsFromStructWithCount(valueinf.FieldByName(typeinf.Field(i).Name).Interface(), column,count)
+			extractColumnsFromStructWithCount(valueinf.FieldByName(typeinf.Field(i).Name).Interface(), column)
 		} else {
 			if *column != "" {
 				*column += ","
 			}
-			*count++
 			*column += getColumnName(typeinf.Field(i).Name)
 		}
 	}
 }
 
 
-func extractColumnsFromStruct(model interface{},column *string)  {
+func extractColumnsFromStruct(model interface{},column *string,currentTime time.Time)  {
 	typeinf := reflect.TypeOf(model)
 	valueinf := reflect.ValueOf(model)
 	for i := 0; i < typeinf.NumField(); i++ {
@@ -76,12 +74,15 @@ func extractColumnsFromStruct(model interface{},column *string)  {
 			continue
 		}
 		if typeinf.Field(i).Type.String() == "time.Time" {
+			if currentTime.IsZero(){
+				continue
+			}
 			if *column != ""{
 				*column += ","
 			}
 			*column += getColumnName(typeinf.Field(i).Name)
 		}else if fieldkind==reflect.Struct && typeinf.Field(i).Tag.Get("ForeignKey") == "" {
-			extractColumnsFromStruct(valueinf.FieldByName(typeinf.Field(i).Name).Interface(),column)
+			extractColumnsFromStruct(valueinf.FieldByName(typeinf.Field(i).Name).Interface(),column,currentTime)
 		} else {
 			if *column != ""{
 				*column += ","
@@ -103,11 +104,11 @@ func extractValuesFromStruct(model interface{},value *string,isUpdate bool,queri
 			foreignChild := valueinf.Field(i).Interface()
 			//TODO: Referencesに対応させる
 			reflect.ValueOf(valueinf.Field(i).FieldByName(foreignKeyName)).Elem().Set(reflect.ValueOf(primaryKeys["ID"]))
-			insertQuery(foreignChild,isUpdate,queries,currentTime)
+			modifyQuery(foreignChild,isUpdate,queries,currentTime)
 			continue
 		} else if (fieldkind==reflect.Slice || fieldkind == reflect.Array) && typeinf.Field(i).Tag.Get("foreignKey") != ""{
 			if valueinf.Field(i).Len() > 0{
-				bulkInsertQuery(valueinf.Field(i).Interface(),isUpdate,queries,currentTime)
+				bulkModifyQuery(valueinf.Field(i).Interface(),isUpdate,queries,currentTime)
 			}
 			continue
 		} else if typeinf.Field(i).Tag.Get("gabaorm") != ""{
@@ -116,17 +117,20 @@ func extractValuesFromStruct(model interface{},value *string,isUpdate bool,queri
 			}
 		}
 		if typeinf.Field(i).Type.String() == "time.Time" {
+			if currentTime.IsZero(){
+				continue
+			}
 			datetime := valueinf.Field(i).Interface().(time.Time)
-			if typeinf.Field(i).Name=="CreatedAt" && !isUpdate{
+			if typeinf.Field(i).Name=="CreatedAt" {
 				datetime = currentTime
-			}else if typeinf.Field(i).Name=="UpdatedAt"{
+			}else if typeinf.Field(i).Name=="UpdatedAt" {
 				datetime = currentTime
 			}
 			if *value != ""{
 				*value += ","
 			}
 			datestring := datetime.Format(layout)
-			if datestring == "0001-01-01 00:00:00"{
+			if datetime.IsZero(){
 				*value += "null"
 			}else{
 				*value += "'"+datestring+"'"
@@ -150,7 +154,7 @@ func extractValuesFromStruct(model interface{},value *string,isUpdate bool,queri
 	}
 }
 
-func insertQuery(model interface{},isUpdate bool,queries *[]QueryInf,currentTime time.Time){
+func modifyQuery(model interface{},isUpdate bool,queries *[]QueryInf,currentTime time.Time){
 	typeinf := reflect.TypeOf(model)
 	tableName := getTableName(typeinf.Name())
 	var queryInf *QueryInf
@@ -164,7 +168,7 @@ func insertQuery(model interface{},isUpdate bool,queries *[]QueryInf,currentTime
 		isNew = true
 	}
 	primaryKeys := map[string]interface{}{}
-	extractColumnsFromStruct(model,&queryInf.Columns)
+	extractColumnsFromStruct(model,&queryInf.Columns,currentTime)
 	extractValuesFromStruct(model,&queryInf.Values,isUpdate,queries,currentTime,primaryKeys)
 	queryInf.Values = "("+queryInf.Values+")"
 	if isNew{
@@ -172,7 +176,7 @@ func insertQuery(model interface{},isUpdate bool,queries *[]QueryInf,currentTime
 	}
 }
 
-func bulkInsertQuery(models interface{},isUpdate bool,queries *[]QueryInf,currentTime time.Time){
+func bulkModifyQuery(models interface{},isUpdate bool,queries *[]QueryInf,currentTime time.Time){
 	objects := reflect.ValueOf(models)
 	typeinf := reflect.TypeOf(objects.Index(0).Interface())
 	tableName := getTableName(typeinf.Name())
@@ -186,7 +190,7 @@ func bulkInsertQuery(models interface{},isUpdate bool,queries *[]QueryInf,curren
 		queryInf.TableName = tableName
 		isNew = true
 	}
-	extractColumnsFromStruct(objects.Index(0).Interface(),&queryInf.Columns)
+	extractColumnsFromStruct(objects.Index(0).Interface(),&queryInf.Columns,currentTime)
 	for i := 0; i < objects.Len(); i++{
 		if queryInf.Values != ""{
 			queryInf.Values += ","

@@ -16,13 +16,12 @@ func(db *DB) GetAll(models interface{},conditions string) error{
 		typeinf := value.Type().Elem()
 		tableName := getTableName(typeinf.Name())
 		columns := ""
-		count := 0
-		extractColumnsFromStructWithCount(reflect.New(typeinf).Elem().Interface(),&columns,&count)
+		extractColumnsFromStructWithCount(reflect.New(typeinf).Elem().Interface(),&columns)
 		query := fmt.Sprintf("SELECT %s FROM %s", columns, tableName)
 		if conditions != ""{
 			query += (" WHERE "+conditions)
 		}
-		log.Println(query)
+		log.Println("GABAORM Query:"+query)
 		rows, err := db.dbpool.Query(query)
 		if err != nil {
 			return err
@@ -31,7 +30,7 @@ func(db *DB) GetAll(models interface{},conditions string) error{
 		for rows.Next() {
 			var columns []interface{}
 			result := reflect.New(typeinf).Elem().Addr().Interface()
-  			AssignFromArgs(result,&columns,0,count)
+  			AssignFromArgs(result,&columns)
 			err := rows.Scan(columns...)
 			value.Set(reflect.Append(value, reflect.Indirect(reflect.ValueOf(result))))
 			if err != nil {
