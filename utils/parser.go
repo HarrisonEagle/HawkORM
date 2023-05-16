@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -27,12 +28,20 @@ func (p *Parser) ExtractPrimaryKey(model interface{}) string {
 	return ""
 }
 
-func (p *Parser) ExtractAllColumnsFromStruct(model interface{}, notZeroOnly bool) []string {
+func (p *Parser) ExtractAllColumnsFromStructOrSlice(model interface{}, notZeroOnly bool) []string {
 	var typeinf reflect.Type
 	var valueinf reflect.Value
 	if reflect.ValueOf(model).Kind() == reflect.Ptr {
 		typeinf = reflect.ValueOf(model).Elem().Type()
 		valueinf = reflect.ValueOf(model).Elem()
+		if valueinf.Kind() == reflect.Slice || valueinf.Kind() == reflect.Array {
+			typeinf = reflect.TypeOf(valueinf.Index(0).Interface())
+			valueinf = valueinf.Index(0)
+		}
+	} else if reflect.ValueOf(model).Kind() == reflect.Slice || reflect.ValueOf(model).Kind() == reflect.Array {
+		objects := reflect.ValueOf(model)
+		typeinf = reflect.TypeOf(objects.Index(0).Interface())
+		valueinf = objects.Index(0)
 	} else {
 		typeinf = reflect.TypeOf(model)
 		valueinf = reflect.ValueOf(model)
@@ -51,13 +60,39 @@ func (p *Parser) ExtractAllColumnsFromStruct(model interface{}, notZeroOnly bool
 	return columns
 }
 
+func (p *Parser) ExtractAllValuesFromStructOrSlice(model interface{}, notZeroOnly bool) [][]string {
+	var valueinf reflect.Value
+	result := [][]string{}
+	if reflect.ValueOf(model).Kind() == reflect.Ptr {
+		valueinf = reflect.ValueOf(model).Elem()
+		if valueinf.Kind() == reflect.Slice || valueinf.Kind() == reflect.Array {
+			for i := 0; i < valueinf.Len(); i++ {
+				value := valueinf.Index(i).Interface()
+				fmt.Println(p.ExtractAllValuesFromStruct(value, notZeroOnly))
+				result = append(result, p.ExtractAllValuesFromStruct(value, notZeroOnly))
+			}
+		} else {
+			result = append(result, p.ExtractAllValuesFromStruct(valueinf.Interface(), notZeroOnly))
+		}
+	} else if reflect.ValueOf(model).Kind() == reflect.Slice || reflect.ValueOf(model).Kind() == reflect.Array {
+		valueinf = reflect.ValueOf(model)
+		for i := 0; i < valueinf.Len(); i++ {
+			value := valueinf.Index(i).Interface()
+			result = append(result, p.ExtractAllValuesFromStruct(value, notZeroOnly))
+		}
+	} else {
+		result = append(result, p.ExtractAllValuesFromStruct(model, notZeroOnly))
+	}
+	return result
+}
+
 func (p *Parser) ExtractAllValuesFromStruct(model interface{}, notZeroOnly bool) []string {
 	var typeinf reflect.Type
 	var valueinf reflect.Value
 	if reflect.ValueOf(model).Kind() == reflect.Ptr {
 		typeinf = reflect.ValueOf(model).Elem().Type()
 		valueinf = reflect.ValueOf(model).Elem()
-	} else {
+	} else if reflect.ValueOf(model).Kind() == reflect.Struct {
 		typeinf = reflect.TypeOf(model)
 		valueinf = reflect.ValueOf(model)
 	}

@@ -18,7 +18,7 @@ func newCondition(parser *utils.Parser) *Condition {
 }
 
 func (c *Condition) SetAND(conditions interface{}) {
-	fields := c.parser.ExtractAllColumnsFromStruct(conditions, true)
+	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
 		condPair := fmt.Sprintf("%s = \"%s\"", fields[i], values[i])
@@ -27,7 +27,7 @@ func (c *Condition) SetAND(conditions interface{}) {
 }
 
 func (c *Condition) SetOR(conditions interface{}) {
-	fields := c.parser.ExtractAllColumnsFromStruct(conditions, true)
+	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
 		var condPair string
@@ -37,7 +37,7 @@ func (c *Condition) SetOR(conditions interface{}) {
 }
 
 func (c *Condition) SetNOT(conditions interface{}) {
-	fields := c.parser.ExtractAllColumnsFromStruct(conditions, true)
+	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
 		var condPair string
@@ -55,5 +55,8 @@ func (c *Condition) getConditionQuery() string {
 		allConds = append(allConds, orCondsStr)
 	}
 	allConds = append(allConds, c.notConds...)
+	if len(allConds) == 0 {
+		return ""
+	}
 	return "WHERE " + strings.Join(allConds, " AND ")
 }

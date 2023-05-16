@@ -11,7 +11,7 @@ import (
 
 type MySQLSelectClause struct {
 	dbpool     *sql.DB
-	scanner    *utils.Scanner
+	Processor  *utils.Processor
 	primaryKey string
 	tableName  string
 	columns    []string
@@ -50,6 +50,7 @@ func (sc *MySQLSelectClause) generateQuery() string {
 	whereCond := sc.condition.getConditionQuery()
 	orderCond := ""
 	limitCond := ""
+	columnCond := strings.Join(sc.columns, ", ")
 	if len(sc.orderBy) > 0 {
 		orderCond = "ORDER BY " + strings.Join(sc.orderBy, ", ")
 	}
@@ -57,23 +58,23 @@ func (sc *MySQLSelectClause) generateQuery() string {
 		limitCond = fmt.Sprintf("LIMIT %d", sc.limit)
 	}
 
-	query := fmt.Sprintf("SELECT * FROM %s %s %s %s", sc.tableName, whereCond, orderCond, limitCond)
+	query := fmt.Sprintf("SELECT %s FROM %s %s %s %s", columnCond, sc.tableName, whereCond, orderCond, limitCond)
 	log.Printf("Executing Query: %s \n", query)
 	return query
 }
 
 func (sc *MySQLSelectClause) All(target interface{}) error {
-	return sc.scanner.ScanQuery(target, sc.generateQuery())
+	return sc.Processor.ScanQuery(target, sc.generateQuery())
 }
 
 func (sc *MySQLSelectClause) First(target interface{}) error {
 	sc.Limit(1)
 	sc.OrderBy([]string{fmt.Sprintf("%s ASC", sc.primaryKey)})
-	return sc.scanner.ScanQuery(target, sc.generateQuery())
+	return sc.Processor.ScanQuery(target, sc.generateQuery())
 }
 
 func (sc *MySQLSelectClause) Last(target interface{}) error {
 	sc.Limit(1)
 	sc.OrderBy([]string{fmt.Sprintf("%s DESC", sc.primaryKey)})
-	return sc.scanner.ScanQuery(target, sc.generateQuery())
+	return sc.Processor.ScanQuery(target, sc.generateQuery())
 }

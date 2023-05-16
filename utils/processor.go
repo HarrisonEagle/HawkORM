@@ -6,17 +6,17 @@ import (
 	"reflect"
 )
 
-type Scanner struct {
+type Processor struct {
 	db *sql.DB
 }
 
-func NewScanner(db *sql.DB) *Scanner {
-	return &Scanner{
+func NewProcessor(db *sql.DB) *Processor {
+	return &Processor{
 		db: db,
 	}
 }
 
-func (s *Scanner) ScanQuery(target interface{}, query string) error {
+func (s *Processor) ScanQuery(target interface{}, query string) error {
 	valuePtr := reflect.ValueOf(target)
 	value := valuePtr.Elem()
 	var typeinf reflect.Type
@@ -49,7 +49,7 @@ func (s *Scanner) ScanQuery(target interface{}, query string) error {
 	return nil
 }
 
-func (s *Scanner) assignFromArgs(model interface{}, columns *[]interface{}) {
+func (s *Processor) assignFromArgs(model interface{}, columns *[]interface{}) {
 	valueinf := reflect.ValueOf(model).Elem()
 	typeinf := valueinf.Type()
 	for i := 0; i < valueinf.NumField(); i++ {
@@ -65,4 +65,8 @@ func (s *Scanner) assignFromArgs(model interface{}, columns *[]interface{}) {
 			*columns = append(*columns, valueinf.Field(i).Addr().Interface())
 		}
 	}
+}
+
+func (s *Processor) ExecQuery(query string) (sql.Result, error) {
+	return s.db.Exec(query)
 }
