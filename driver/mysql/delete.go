@@ -3,10 +3,11 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/HarrisonOwl/GABAORM/clauses"
-	"github.com/HarrisonOwl/GABAORM/utils"
 	"log"
 	"strings"
+
+	"github.com/HarrisonEagle/HawkORM/clauses"
+	"github.com/HarrisonEagle/HawkORM/utils"
 )
 
 type MySQLDeleteClause struct {

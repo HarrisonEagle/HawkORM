@@ -1,8 +1,8 @@
 package GABAORM
 
 import (
-	"github.com/HarrisonOwl/GABAORM/driver"
-	"github.com/HarrisonOwl/GABAORM/driver/mysql"
+	"github.com/HarrisonEagle/HawkORM/driver"
+	"github.com/HarrisonEagle/HawkORM/driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 )
 

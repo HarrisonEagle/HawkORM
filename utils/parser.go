@@ -19,8 +19,8 @@ func (p *Parser) ExtractPrimaryKey(model interface{}) string {
 		typeinf = reflect.TypeOf(model)
 	}
 	for i := 0; i < typeinf.NumField(); i++ {
-		if typeinf.Field(i).Tag.Get("gabaorm") != "" {
-			if strings.Contains(typeinf.Field(i).Tag.Get("gabaorm"), "primarykey") {
+		if typeinf.Field(i).Tag.Get("hawkorm") != "" {
+			if strings.Contains(typeinf.Field(i).Tag.Get("hawkorm"), "primarykey") {
 				return p.getColumnName(typeinf.Field(i).Name)
 			}
 		}

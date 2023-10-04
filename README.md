@@ -1,10 +1,10 @@
-# GABAORM
+# HawkORM
 A toy ORM for golang.
 Currently only MySQL is supported.
 
 ## Installation
 ```shell
-go get github.com/HarrisonOwl/GABAORM
+go get github.com/HarrisonEagle/HawkORM
 ```
 
 ## Progress
@@ -33,7 +33,7 @@ go get github.com/HarrisonOwl/GABAORM
 For example, user data object defined like this:
 ```go
 type User struct {
- ID        string `gabaorm:"primarykey"`
+ ID        string `hawkorm:"primarykey"`
  Name      string
  Email     string
  CreatedAt time.Time
