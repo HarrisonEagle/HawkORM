@@ -2,9 +2,10 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/HarrisonOwl/GABAORM/clauses"
-	"github.com/HarrisonOwl/GABAORM/driver"
-	"github.com/HarrisonOwl/GABAORM/utils"
+
+	"github.com/HarrisonEagle/HawkORM/clauses"
+	"github.com/HarrisonEagle/HawkORM/driver"
+	"github.com/HarrisonEagle/HawkORM/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 

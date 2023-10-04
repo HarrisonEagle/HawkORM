@@ -2,8 +2,9 @@ package mysql
 
 import (
 	"fmt"
-	"github.com/HarrisonOwl/GABAORM/utils"
 	"strings"
+
+	"github.com/HarrisonEagle/HawkORM/utils"
 )
 
 type Condition struct {

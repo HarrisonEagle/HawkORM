@@ -1,4 +1,4 @@
-module github.com/HarrisonOwl/GABAORM
+module github.com/HarrisonEagle/HawkORM
 
 go 1.17
 
