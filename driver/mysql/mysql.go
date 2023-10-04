@@ -16,6 +16,11 @@ type MySQLDB struct {
 }
 
 func OpenMySQL(config string) (driver.Database, error) {
+	// create mock db for test
+	if config == "test" {
+		mockdb := &sql.DB{}
+		return &MySQLDB{dbpool: mockdb, parser: &utils.Parser{}, Processor: utils.NewProcessor(mockdb)}, nil
+	}
 	db, err := sql.Open("mysql", config)
 	if err != nil {
 		return nil, err
@@ -26,12 +31,12 @@ func OpenMySQL(config string) (driver.Database, error) {
 
 func (db MySQLDB) Select(dataType interface{}) clauses.SelectClause {
 	return &MySQLSelectClause{
-		dbpool:     db.dbpool,
-		Processor:  db.Processor,
-		primaryKey: db.parser.ExtractPrimaryKey(dataType),
-		tableName:  db.parser.GetTableName(dataType),
-		columns:    db.parser.ExtractAllColumnsFromStructOrSlice(dataType, false),
-		condition:  newCondition(db.parser),
+		dbpool:          db.dbpool,
+		Processor:       db.Processor,
+		primaryKey:      db.parser.ExtractPrimaryKey(dataType),
+		tableName:       db.parser.GetTableName(dataType),
+		columns:         db.parser.ExtractAllColumnsFromStructOrSlice(dataType, false),
+		whereConditions: newWhereCondition(db.parser),
 	}
 }
 
@@ -46,20 +51,20 @@ func (db MySQLDB) Insert(dataType interface{}) clauses.InsertClause {
 
 func (db MySQLDB) Delete(dataType interface{}) clauses.DeleteClause {
 	return &MySQLDeleteClause{
-		dbpool:    db.dbpool,
-		Processor: db.Processor,
-		tableName: db.parser.GetTableName(dataType),
-		parser:    db.parser,
-		condition: newCondition(db.parser),
+		dbpool:          db.dbpool,
+		Processor:       db.Processor,
+		tableName:       db.parser.GetTableName(dataType),
+		parser:          db.parser,
+		whereConditions: newWhereCondition(db.parser),
 	}
 }
 
 func (db MySQLDB) Update(dataType interface{}) clauses.UpdateClause {
 	return &MySQLUpdateClause{
-		dbpool:    db.dbpool,
-		Processor: db.Processor,
-		tableName: db.parser.GetTableName(dataType),
-		parser:    db.parser,
-		condition: newCondition(db.parser),
+		dbpool:          db.dbpool,
+		Processor:       db.Processor,
+		tableName:       db.parser.GetTableName(dataType),
+		parser:          db.parser,
+		whereConditions: newWhereCondition(db.parser),
 	}
 }

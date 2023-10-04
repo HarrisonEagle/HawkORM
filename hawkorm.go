@@ -1,4 +1,4 @@
-package GABAORM
+package HawkORM
 
 import (
 	"github.com/HarrisonEagle/HawkORM/driver"

@@ -53,7 +53,7 @@ func (p *Parser) ExtractAllColumnsFromStructOrSlice(model interface{}, notZeroOn
 		if notZeroOnly && value.IsZero() {
 			continue
 		}
-		if fieldType == reflect.Struct && typeinf.Field(i).Type.String() == "time.Time" || fieldType == reflect.Int || fieldType == reflect.Float64 || fieldType == reflect.String {
+		if !(fieldType == reflect.Struct && typeinf.Field(i).Type.String() != "time.Time") && fieldType != reflect.Array {
 			columns = append(columns, p.getColumnName(typeinf.Field(i).Name))
 		}
 	}

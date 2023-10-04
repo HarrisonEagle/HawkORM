@@ -43,6 +43,13 @@ type User struct {
 
 ### SELECT
 ```go
+// connect to db
+// remember to add parseTime=true to parse time correctlt
+testDB, err := HawkORM.OpenMySQL("user:pass@localhost:3306/databasename?parseTime=true")
+if err != nil{
+	log.Fatalf("connect to db failed!")
+}
+
 // equal to: SELECT id, name, email, created_at, updated_at FROM users WHERE (id = "userId" OR name = "testname") ORDER BY id ASC LIMIT 1
 var users []User
 testDB.Select(&User{}).WhereOr(&User{ID: "userId", Name: "testname"}).First(&users)

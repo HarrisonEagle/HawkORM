@@ -25,7 +25,7 @@ func (sc *MySQLInsertClause) SetData(data interface{}) clauses.InsertClause {
 	return sc
 }
 
-func (sc *MySQLInsertClause) generateQuery() string {
+func (sc *MySQLInsertClause) GetSQLQuery() string {
 	columnCond := "(" + strings.Join(sc.columns, ", ") + ")"
 	var valueConds []string
 	for i := 0; i < len(sc.values); i++ {
@@ -41,5 +41,5 @@ func (sc *MySQLInsertClause) generateQuery() string {
 }
 
 func (sc *MySQLInsertClause) Exec() (sql.Result, error) {
-	return sc.Processor.ExecQuery(sc.generateQuery())
+	return sc.Processor.ExecQuery(sc.GetSQLQuery())
 }
