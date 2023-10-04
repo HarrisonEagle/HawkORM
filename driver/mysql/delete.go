@@ -11,13 +11,13 @@ import (
 )
 
 type MySQLDeleteClause struct {
-	dbpool    *sql.DB
-	Processor *utils.Processor
-	parser    *utils.Parser
-	tableName string
-	condition *Condition
-	orderBy   []string
-	limit     int
+	dbpool          *sql.DB
+	Processor       *utils.Processor
+	parser          *utils.Parser
+	tableName       string
+	whereConditions *WhereCondition
+	orderBy         []string
+	limit           int
 }
 
 func (sc *MySQLDeleteClause) Limit(number int) clauses.DeleteClause {
@@ -32,23 +32,23 @@ func (sc *MySQLDeleteClause) OrderBy(orderBy []string) clauses.DeleteClause {
 }
 
 func (sc *MySQLDeleteClause) Where(condition interface{}) clauses.DeleteClause {
-	sc.condition.SetAND(condition)
+	sc.whereConditions.SetAND(condition)
 	return sc
 }
 
 func (sc *MySQLDeleteClause) WhereOr(condition interface{}) clauses.DeleteClause {
-	sc.condition.SetOR(condition)
+	sc.whereConditions.SetOR(condition)
 	return sc
 }
 
 func (sc *MySQLDeleteClause) WhereNot(condition interface{}) clauses.DeleteClause {
-	sc.condition.SetNOT(condition)
+	sc.whereConditions.SetNOT(condition)
 	return sc
 }
 
 // DELETE FROM db.users WHERE cognito_id = "BBBBBB" ORDER BY name ASC LIMIT 2
-func (sc *MySQLDeleteClause) generateQuery() string {
-	whereCond := sc.condition.getConditionQuery()
+func (sc *MySQLDeleteClause) GetSQLQuery() string {
+	whereCond := sc.whereConditions.getConditionQuery()
 	orderCond := ""
 	limitCond := ""
 	if len(sc.orderBy) > 0 {
@@ -57,12 +57,20 @@ func (sc *MySQLDeleteClause) generateQuery() string {
 	if sc.limit > 0 {
 		limitCond = fmt.Sprintf("LIMIT %d", sc.limit)
 	}
-
-	query := fmt.Sprintf("DELETE FROM %s %s %s %s", sc.tableName, whereCond, orderCond, limitCond)
+	query := "DELETE FROM " + sc.tableName
+	if whereCond != "" {
+		query += (" " + whereCond)
+	}
+	if orderCond != "" {
+		query += (" " + orderCond)
+	}
+	if limitCond != "" {
+		query += (" " + limitCond)
+	}
 	log.Printf("Executing Query: %s \n", query)
 	return query
 }
 
 func (sc *MySQLDeleteClause) Exec() (sql.Result, error) {
-	return sc.Processor.ExecQuery(sc.generateQuery())
+	return sc.Processor.ExecQuery(sc.GetSQLQuery())
 }

@@ -7,6 +7,7 @@ type UpdateClause interface {
 	Where(condition interface{}) UpdateClause
 	WhereOr(condition interface{}) UpdateClause
 	WhereNot(condition interface{}) UpdateClause
+	GetSQLQuery() string
 	Exec() (sql.Result, error)
 	OrderBy(orderBy []string) UpdateClause
 	Limit(number int) UpdateClause

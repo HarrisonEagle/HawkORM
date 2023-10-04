@@ -11,15 +11,15 @@ import (
 )
 
 type MySQLUpdateClause struct {
-	dbpool    *sql.DB
-	Processor *utils.Processor
-	parser    *utils.Parser
-	tableName string
-	columns   []string
-	values    []string
-	condition *Condition
-	orderBy   []string
-	limit     int
+	dbpool          *sql.DB
+	Processor       *utils.Processor
+	parser          *utils.Parser
+	tableName       string
+	columns         []string
+	values          []string
+	whereConditions *WhereCondition
+	orderBy         []string
+	limit           int
 }
 
 func (sc *MySQLUpdateClause) SetData(data interface{}) clauses.UpdateClause {
@@ -28,9 +28,9 @@ func (sc *MySQLUpdateClause) SetData(data interface{}) clauses.UpdateClause {
 	return sc
 }
 
-func (sc *MySQLUpdateClause) generateQuery() string {
+func (sc *MySQLUpdateClause) GetSQLQuery() string {
 	var valueConds []string
-	whereCond := sc.condition.getConditionQuery()
+	whereCond := sc.whereConditions.getConditionQuery()
 	orderCond := ""
 	limitCond := ""
 	if len(sc.orderBy) > 0 {
@@ -42,7 +42,16 @@ func (sc *MySQLUpdateClause) generateQuery() string {
 	for i := 0; i < len(sc.values); i++ {
 		valueConds = append(valueConds, fmt.Sprintf("%s = \"%s\"", sc.columns[i], sc.values[i]))
 	}
-	query := fmt.Sprintf("UPDATE %s SET %s %s %s %s", sc.tableName, strings.Join(valueConds, ", "), whereCond, orderCond, limitCond)
+	query := fmt.Sprintf("UPDATE %s SET %s", sc.tableName, strings.Join(valueConds, ", "))
+	if whereCond != "" {
+		query += (" " + whereCond)
+	}
+	if orderCond != "" {
+		query += (" " + orderCond)
+	}
+	if limitCond != "" {
+		query += (" " + limitCond)
+	}
 	log.Printf("Executing Query: %s \n", query)
 	return query
 }
@@ -59,20 +68,20 @@ func (sc *MySQLUpdateClause) OrderBy(orderBy []string) clauses.UpdateClause {
 }
 
 func (sc *MySQLUpdateClause) Where(condition interface{}) clauses.UpdateClause {
-	sc.condition.SetAND(condition)
+	sc.whereConditions.SetAND(condition)
 	return sc
 }
 
 func (sc *MySQLUpdateClause) WhereOr(condition interface{}) clauses.UpdateClause {
-	sc.condition.SetOR(condition)
+	sc.whereConditions.SetOR(condition)
 	return sc
 }
 
 func (sc *MySQLUpdateClause) WhereNot(condition interface{}) clauses.UpdateClause {
-	sc.condition.SetNOT(condition)
+	sc.whereConditions.SetNOT(condition)
 	return sc
 }
 
 func (sc *MySQLUpdateClause) Exec() (sql.Result, error) {
-	return sc.Processor.ExecQuery(sc.generateQuery())
+	return sc.Processor.ExecQuery(sc.GetSQLQuery())
 }

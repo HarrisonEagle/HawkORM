@@ -37,13 +37,13 @@ func (s *Processor) ScanQuery(target interface{}, query string) error {
 		result := reflect.New(typeinf).Elem().Addr().Interface()
 		s.assignFromArgs(result, &columns)
 		err := rows.Scan(columns...)
+		if err != nil {
+			return err
+		}
 		if value.Kind() == reflect.Slice {
 			value.Set(reflect.Append(value, reflect.Indirect(reflect.ValueOf(result))))
 		} else if value.Kind() == reflect.Struct {
 			value.Set(reflect.Indirect(reflect.ValueOf(result)))
-		}
-		if err != nil {
-			return err
 		}
 	}
 	return nil

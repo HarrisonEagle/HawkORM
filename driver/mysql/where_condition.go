@@ -7,18 +7,18 @@ import (
 	"github.com/HarrisonEagle/HawkORM/utils"
 )
 
-type Condition struct {
+type WhereCondition struct {
 	parser   *utils.Parser
 	andConds []string
 	orConds  []string
 	notConds []string
 }
 
-func newCondition(parser *utils.Parser) *Condition {
-	return &Condition{parser: parser}
+func newWhereCondition(parser *utils.Parser) *WhereCondition {
+	return &WhereCondition{parser: parser}
 }
 
-func (c *Condition) SetAND(conditions interface{}) {
+func (c *WhereCondition) SetAND(conditions interface{}) {
 	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
@@ -27,27 +27,25 @@ func (c *Condition) SetAND(conditions interface{}) {
 	}
 }
 
-func (c *Condition) SetOR(conditions interface{}) {
+func (c *WhereCondition) SetOR(conditions interface{}) {
 	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
-		var condPair string
-		condPair = fmt.Sprintf("%s = \"%s\"", fields[i], values[i])
+		condPair := fmt.Sprintf("%s = \"%s\"", fields[i], values[i])
 		c.orConds = append(c.orConds, condPair)
 	}
 }
 
-func (c *Condition) SetNOT(conditions interface{}) {
+func (c *WhereCondition) SetNOT(conditions interface{}) {
 	fields := c.parser.ExtractAllColumnsFromStructOrSlice(conditions, true)
 	values := c.parser.ExtractAllValuesFromStruct(conditions, true)
 	for i := 0; i < len(fields); i++ {
-		var condPair string
-		condPair = fmt.Sprintf("%s <> \"%s\"", fields[i], values[i])
+		condPair := fmt.Sprintf("%s <> \"%s\"", fields[i], values[i])
 		c.notConds = append(c.notConds, condPair)
 	}
 }
 
-func (c *Condition) getConditionQuery() string {
+func (c *WhereCondition) getConditionQuery() string {
 	orCondsStr := ""
 	allConds := c.andConds
 	if len(c.orConds) > 0 {

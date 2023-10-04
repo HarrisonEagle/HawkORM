@@ -7,5 +7,6 @@ type DeleteClause interface {
 	WhereOr(condition interface{}) DeleteClause
 	WhereNot(condition interface{}) DeleteClause
 	Limit(number int) DeleteClause
+	GetSQLQuery() string
 	Exec() (sql.Result, error)
 }
